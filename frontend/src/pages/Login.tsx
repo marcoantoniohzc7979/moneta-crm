@@ -17,10 +17,16 @@ export const Login = () => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim().toLowerCase(), password.trim());
       navigate('/');
-    } catch {
-      setError('Credenciales incorrectas');
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        setError('Credenciales incorrectas');
+      } else if (err?.code === 'ERR_NETWORK' || !err?.response) {
+        setError('No se puede conectar al servidor. Verifica tu conexión.');
+      } else {
+        setError('Error al iniciar sesión. Intenta de nuevo.');
+      }
     } finally {
       setLoading(false);
     }
@@ -31,7 +37,11 @@ export const Login = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-moneta-orange rounded-2xl mb-4 text-white text-2xl font-black shadow-lg shadow-moneta-orange/30">M</div>
+          <img
+            src="/logo-moneta.png"
+            alt="Moneta"
+            style={{ height: 64, objectFit: 'contain', display: 'inline-block', marginBottom: 16 }}
+          />
           <h1 className="text-2xl font-bold text-white">Moneta CRM</h1>
           <p className="text-white/40 text-sm mt-1">Gestión comercial B2B</p>
         </div>
@@ -58,7 +68,11 @@ export const Login = () => {
             required
           />
 
-          {error && <p className="text-sm text-red-400 text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-400 text-center bg-red-400/10 border border-red-400/20 rounded-lg py-2">
+              {error}
+            </p>
+          )}
 
           <Button type="submit" loading={loading} className="w-full justify-center py-3">
             Acceder al CRM
