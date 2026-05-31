@@ -50,6 +50,7 @@ export interface Account {
   contacts?: Contact[];
   products?: AccountProduct[];
   opportunities?: Opportunity[];
+  activities?: Activity[];
   _count?: { opportunities: number; activities: number };
 }
 

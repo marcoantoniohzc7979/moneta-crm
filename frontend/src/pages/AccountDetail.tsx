@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Account } from '../types';
+import { Account, Activity } from '../types';
 import { Badge } from '../components/ui/Badge';
 import { accountStatusColor, accountStatusLabel, industryLabel, sizeLabel, productLabel, productColor, productShortLabel, stageLabel, formatCurrency, formatDate, getHealthScoreColor, activityTypeIcon, activityTypeLabel, formatRelativeDate } from '../utils/formatters';
 import api from '../utils/api';
@@ -119,9 +119,9 @@ export const AccountDetail = () => {
 
       {tab === 'activities' && (
         <div className="space-y-2">
-          {account.activities?.map(act => (
+          {account.activities?.map((act: Activity) => (
             <div key={act.id} className="flex items-start gap-3 bg-moneta-navy border border-white/10 rounded-xl p-4">
-              <span className="text-xl">{activityTypeIcon[act.type]}</span>
+              <span className="text-xl">{(activityTypeIcon as Record<string, string>)[act.type]}</span>
               <div className="flex-1">
                 <p className="text-sm font-medium text-white">{act.title}</p>
                 {act.description && <p className="text-xs text-white/50 mt-0.5">{act.description}</p>}
