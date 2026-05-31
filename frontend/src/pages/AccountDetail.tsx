@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Account, Activity } from '../types';
 import { Badge } from '../components/ui/Badge';
-import { accountStatusColor, accountStatusLabel, industryLabel, sizeLabel, productLabel, productColor, productShortLabel, stageLabel, formatCurrency, formatDate, getHealthScoreColor, activityTypeIcon, activityTypeLabel, formatRelativeDate } from '../utils/formatters';
-import api from '../utils/api';
+import { accountStatusColor, accountStatusLabel, industryLabel, sizeLabel, productLabel, productColor, stageLabel, formatCurrency, formatDate, getHealthScoreColor, activityTypeIcon, activityTypeLabel, formatRelativeDate } from '../utils/formatters';
+import { MOCK_ACCOUNTS, MOCK_OPPORTUNITIES, MOCK_ACTIVITIES } from '../data/mockData';
 
 export const AccountDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,7 +14,13 @@ export const AccountDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    api.get(`/accounts/${id}`).then(r => { setAccount(r.data); setLoading(false); });
+    const acc = MOCK_ACCOUNTS.find(a => a.id === id);
+    if (acc) {
+      const opportunities = MOCK_OPPORTUNITIES.filter(o => o.accountId === id);
+      const activities = MOCK_ACTIVITIES.filter(a => a.accountId === id);
+      setAccount({ ...acc, opportunities, activities });
+    }
+    setLoading(false);
   }, [id]);
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-moneta-orange/30 border-t-moneta-orange rounded-full animate-spin" /></div>;

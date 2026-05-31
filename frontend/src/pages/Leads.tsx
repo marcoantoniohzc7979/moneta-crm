@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input, Select, TextArea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { getLeadCategory, industryLabel, leadSourceLabel, formatRelativeDate } from '../utils/formatters';
-import api from '../utils/api';
+import { MOCK_LEADS } from '../data/mockData';
 
 const BANT_LABELS = {
   budget: { SI: 'Sí', NO: 'No', DESCONOCIDO: 'Desconocido' },
@@ -36,8 +36,9 @@ const LeadForm = ({ onSave, onClose }: { onSave: () => void; onClose: () => void
 
   const save = async () => {
     setSaving(true);
-    try { await api.post('/leads', form); onSave(); }
-    finally { setSaving(false); }
+    await new Promise(r => setTimeout(r, 500));
+    setSaving(false);
+    onSave();
   };
 
   return (
@@ -90,18 +91,18 @@ export const Leads = () => {
   const [filterConv, setFilterConv] = useState('false');
   const [converting, setConverting] = useState<string | null>(null);
 
-  const load = () => {
-    setLoading(true);
-    api.get('/leads', { params: { converted: filterConv } }).then(r => { setLeads(r.data); setLoading(false); });
-  };
-
-  useEffect(() => { load(); }, [filterConv]);
+  useEffect(() => {
+    const converted = filterConv === 'true';
+    setLeads(MOCK_LEADS.filter(l => l.converted === converted));
+    setLoading(false);
+  }, [filterConv]);
 
   const convertLead = async (id: string) => {
     if (!confirm('¿Convertir este lead a cuenta y prospecto?')) return;
     setConverting(id);
-    try { await api.post(`/leads/${id}/convert`); load(); }
-    finally { setConverting(null); }
+    await new Promise(r => setTimeout(r, 700));
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, converted: true } : l));
+    setConverting(null);
   };
 
   const hot = leads.filter(l => l.score >= 70);
@@ -182,11 +183,12 @@ export const Leads = () => {
               </div>
             </div>
           ))}
+          {leads.length === 0 && <div className="text-center py-20 text-white/30 text-sm">No hay leads en esta categoría</div>}
         </div>
       )}
 
       <Modal open={showNew} onClose={() => setShowNew(false)} title="Nuevo Lead" size="lg">
-        <LeadForm onSave={() => { setShowNew(false); load(); }} onClose={() => setShowNew(false)} />
+        <LeadForm onSave={() => setShowNew(false)} onClose={() => setShowNew(false)} />
       </Modal>
     </div>
   );

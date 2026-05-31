@@ -4,7 +4,7 @@ import { Opportunity, PipelineStage, ProductType } from '../types';
 import { Badge } from '../components/ui/Badge';
 import { Select } from '../components/ui/Input';
 import { formatCurrency, stageLabel, productShortLabel, productColor, getStageUrgencyColor, productLabel } from '../utils/formatters';
-import api from '../utils/api';
+import { MOCK_OPPORTUNITIES, MOCK_USERS } from '../data/mockData';
 import { useNavigate } from 'react-router-dom';
 
 const STAGES: PipelineStage[] = ['PROSPECCION', 'CALIFICACION', 'DEMO_PROPUESTA', 'NEGOCIACION', 'CONTRATO'];
@@ -78,41 +78,33 @@ export const Pipeline = () => {
   const [loading, setLoading] = useState(true);
   const [filterProduct, setFilterProduct] = useState('');
   const [filterOwner, setFilterOwner] = useState('');
-  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
   const [activeOp, setActiveOp] = useState<Opportunity | null>(null);
   const [view, setView] = useState<'kanban' | 'list'>('kanban');
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const load = () => {
-    const params: Record<string, string> = {};
-    if (filterProduct) params.product = filterProduct;
-    if (filterOwner) params.ownerId = filterOwner;
-    api.get('/opportunities', { params }).then(r => { setOpportunities(r.data); setLoading(false); });
-  };
+  useEffect(() => {
+    let filtered = MOCK_OPPORTUNITIES.filter(o => !['CERRADO_GANADO', 'CERRADO_PERDIDO'].includes(o.stage));
+    if (filterProduct) filtered = filtered.filter(o => o.products?.some(p => p.product === filterProduct));
+    if (filterOwner) filtered = filtered.filter(o => o.ownerId === filterOwner);
+    setOpportunities(filtered);
+    setLoading(false);
+  }, [filterProduct, filterOwner]);
 
-  useEffect(() => { load(); }, [filterProduct, filterOwner]);
-  useEffect(() => { api.get('/users').then(r => setUsers(r.data)); }, []);
-
-  const activeStages = opportunities.filter(o => !['CERRADO_GANADO', 'CERRADO_PERDIDO'].includes(o.stage));
-
-  const byStage = (stage: PipelineStage) => activeStages.filter(o => o.stage === stage);
+  const byStage = (stage: PipelineStage) => opportunities.filter(o => o.stage === stage);
   const stageTotal = (stage: PipelineStage) => byStage(stage).reduce((s, o) => s + o.value, 0);
 
   const handleDragStart = (e: DragStartEvent) => {
     setActiveOp(opportunities.find(o => o.id === e.active.id) || null);
   };
 
-  const handleDragEnd = async (e: DragEndEvent) => {
+  const handleDragEnd = (e: DragEndEvent) => {
     setActiveOp(null);
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     const newStage = over.id as PipelineStage;
     if (!STAGES.includes(newStage)) return;
-
     setOpportunities(prev => prev.map(o => o.id === active.id ? { ...o, stage: newStage } : o));
-    await api.put(`/opportunities/${active.id}`, { stage: newStage });
-    load();
   };
 
   return (
@@ -125,7 +117,7 @@ export const Pipeline = () => {
         </Select>
         <Select value={filterOwner} onChange={e => setFilterOwner(e.target.value)} className="min-w-[160px]">
           <option value="">Todos los R. Comerciales</option>
-          {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          {MOCK_USERS.filter(u => u.role === 'EJECUTIVO_VENTAS').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs text-white/40">Vista:</span>
@@ -177,7 +169,7 @@ export const Pipeline = () => {
             <tbody>
               {loading ? (
                 <tr><td colSpan={9} className="px-4 py-8 text-center text-white/40">Cargando...</td></tr>
-              ) : activeStages.map(op => (
+              ) : opportunities.map(op => (
                 <tr key={op.id} className="border-b border-white/5 hover:bg-white/5 cursor-pointer" onClick={() => window.location.href = `/opportunities/${op.id}`}>
                   <td className="px-4 py-3"><p className="font-medium text-white truncate max-w-[150px]">{op.name}</p></td>
                   <td className="px-4 py-3 text-white/70">{op.account?.razonSocial}</td>

@@ -95,6 +95,7 @@ export interface Opportunity {
   daysInStage: number;
   lastStageChange: string;
   createdAt: string;
+  updatedAt?: string;
   account?: { id: string; razonSocial: string; industry: Industry };
   owner?: { id: string; name: string };
   products?: OpportunityProduct[];
@@ -128,6 +129,7 @@ export interface Lead {
   convertedAt?: string;
   owner?: { id: string; name: string };
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Activity {
@@ -144,6 +146,7 @@ export interface Activity {
   duration?: number;
   outcome?: string;
   createdAt: string;
+  updatedAt?: string;
   user?: { id: string; name: string };
   account?: { id: string; razonSocial: string };
   opportunity?: { id: string; name: string };

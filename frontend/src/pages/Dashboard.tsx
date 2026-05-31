@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  FunnelChart, Funnel, LabelList, Cell, PieChart, Pie
+  Cell
 } from 'recharts';
 import { KPICard } from '../components/dashboard/KPICard';
 import { Badge } from '../components/ui/Badge';
-import { formatCurrency, formatRelativeDate, stageLabel, productLabel, productColor, productShortLabel, accountStatusColor, accountStatusLabel } from '../utils/formatters';
-import api from '../utils/api';
+import { formatCurrency, formatRelativeDate, stageLabel, productShortLabel, accountStatusColor, accountStatusLabel } from '../utils/formatters';
 import { DashboardKPIs, PipelineStage, ProductType, AccountStatus } from '../types';
+import { MOCK_KPIS } from '../data/mockData';
 
 const STAGE_ORDER: PipelineStage[] = ['PROSPECCION', 'CALIFICACION', 'DEMO_PROPUESTA', 'NEGOCIACION', 'CONTRATO'];
 const PRODUCT_COLORS: Record<ProductType, string> = {
@@ -36,7 +36,8 @@ export const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/dashboard/kpis').then(r => { setKpis(r.data); setLoading(false); }).catch(() => setLoading(false));
+    setKpis(MOCK_KPIS);
+    setLoading(false);
   }, []);
 
   if (loading) return (

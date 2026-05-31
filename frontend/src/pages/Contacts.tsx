@@ -6,7 +6,7 @@ import { Input, Select } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { Table } from '../components/ui/Table';
 import { contactRoleLabel } from '../utils/formatters';
-import api from '../utils/api';
+import { MOCK_CONTACTS, MOCK_ACCOUNTS } from '../data/mockData';
 
 const ROLE_COLORS: Record<ContactRole, string> = {
   DECISION_MAKER: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
@@ -17,15 +17,13 @@ const ROLE_COLORS: Record<ContactRole, string> = {
 
 const ContactForm = ({ onSave, onClose }: { onSave: () => void; onClose: () => void }) => {
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', jobTitle: '', role: 'DECISION_MAKER', accountId: '' });
-  const [accounts, setAccounts] = useState<{ id: string; razonSocial: string }[]>([]);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => { api.get('/accounts', { params: { limit: '100' } }).then(r => setAccounts(r.data.accounts)); }, []);
 
   const save = async () => {
     setSaving(true);
-    try { await api.post('/contacts', form); onSave(); }
-    finally { setSaving(false); }
+    await new Promise(r => setTimeout(r, 500));
+    setSaving(false);
+    onSave();
   };
 
   return (
@@ -43,7 +41,7 @@ const ContactForm = ({ onSave, onClose }: { onSave: () => void; onClose: () => v
         </Select>
         <Select label="Cuenta *" value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))} className="col-span-2">
           <option value="">Seleccionar cuenta...</option>
-          {accounts.map(a => <option key={a.id} value={a.id}>{a.razonSocial}</option>)}
+          {MOCK_ACCOUNTS.map(a => <option key={a.id} value={a.id}>{a.razonSocial}</option>)}
         </Select>
       </div>
       <div className="flex gap-3 justify-end pt-2">
@@ -60,12 +58,19 @@ export const Contacts = () => {
   const [search, setSearch] = useState('');
   const [showNew, setShowNew] = useState(false);
 
-  const load = (q?: string) => {
-    setLoading(true);
-    api.get('/contacts', { params: q ? { search: q } : {} }).then(r => { setContacts(r.data); setLoading(false); });
-  };
-
-  useEffect(() => { const t = setTimeout(() => load(search), 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      let filtered = MOCK_CONTACTS;
+      if (search) filtered = filtered.filter(c =>
+        `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+        c.email?.toLowerCase().includes(search.toLowerCase()) ||
+        c.account?.razonSocial.toLowerCase().includes(search.toLowerCase())
+      );
+      setContacts(filtered);
+      setLoading(false);
+    }, 200);
+    return () => clearTimeout(t);
+  }, [search]);
 
   return (
     <div className="space-y-5">
@@ -95,7 +100,7 @@ export const Contacts = () => {
       </div>
 
       <Modal open={showNew} onClose={() => setShowNew(false)} title="Nuevo Contacto">
-        <ContactForm onSave={() => { setShowNew(false); load(); }} onClose={() => setShowNew(false)} />
+        <ContactForm onSave={() => setShowNew(false)} onClose={() => setShowNew(false)} />
       </Modal>
     </div>
   );

@@ -4,21 +4,19 @@ import { Button } from '../components/ui/Button';
 import { Input, Select, TextArea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { activityTypeLabel, activityTypeIcon, formatRelativeDate, formatDate } from '../utils/formatters';
-import api from '../utils/api';
+import { MOCK_ACTIVITIES, MOCK_ACCOUNTS } from '../data/mockData';
 
 const TYPES: ActivityType[] = ['LLAMADA', 'EMAIL', 'REUNION', 'DEMO', 'PROPUESTA_ENVIADA', 'CONTRATO_ENVIADO', 'NOTA'];
 
 const ActivityForm = ({ onSave, onClose }: { onSave: () => void; onClose: () => void }) => {
-  const [form, setForm] = useState({ type: 'LLAMADA', title: '', description: '', accountId: '', opportunityId: '', outcome: '' });
-  const [accounts, setAccounts] = useState<{ id: string; razonSocial: string }[]>([]);
+  const [form, setForm] = useState({ type: 'LLAMADA', title: '', description: '', accountId: '', outcome: '' });
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => { api.get('/accounts', { params: { limit: '100' } }).then(r => setAccounts(r.data.accounts)); }, []);
 
   const save = async () => {
     setSaving(true);
-    try { await api.post('/activities', { ...form, completedAt: new Date().toISOString() }); onSave(); }
-    finally { setSaving(false); }
+    await new Promise(r => setTimeout(r, 500));
+    setSaving(false);
+    onSave();
   };
 
   return (
@@ -29,7 +27,7 @@ const ActivityForm = ({ onSave, onClose }: { onSave: () => void; onClose: () => 
         </Select>
         <Select label="Cuenta" value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}>
           <option value="">Sin cuenta</option>
-          {accounts.map(a => <option key={a.id} value={a.id}>{a.razonSocial}</option>)}
+          {MOCK_ACCOUNTS.map(a => <option key={a.id} value={a.id}>{a.razonSocial}</option>)}
         </Select>
         <div className="col-span-2"><Input label="Título *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Breve descripción de la actividad" /></div>
         <div className="col-span-2"><TextArea label="Descripción" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
@@ -49,14 +47,12 @@ export const Activities = () => {
   const [filterType, setFilterType] = useState('');
   const [showNew, setShowNew] = useState(false);
 
-  const load = () => {
-    setLoading(true);
-    const params: Record<string, string> = { limit: '100' };
-    if (filterType) params.type = filterType;
-    api.get('/activities', { params }).then(r => { setActivities(r.data); setLoading(false); });
-  };
-
-  useEffect(() => { load(); }, [filterType]);
+  useEffect(() => {
+    let filtered = MOCK_ACTIVITIES;
+    if (filterType) filtered = filtered.filter(a => a.type === filterType);
+    setActivities(filtered);
+    setLoading(false);
+  }, [filterType]);
 
   // Group by date
   const grouped: Record<string, Activity[]> = {};
@@ -111,7 +107,7 @@ export const Activities = () => {
       )}
 
       <Modal open={showNew} onClose={() => setShowNew(false)} title="Registrar Actividad" size="lg">
-        <ActivityForm onSave={() => { setShowNew(false); load(); }} onClose={() => setShowNew(false)} />
+        <ActivityForm onSave={() => setShowNew(false)} onClose={() => setShowNew(false)} />
       </Modal>
     </div>
   );

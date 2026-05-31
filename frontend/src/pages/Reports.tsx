@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { formatCurrency, roleLabel } from '../utils/formatters';
 import { UserRole } from '../types';
-import api from '../utils/api';
+import { MOCK_FORECAST, MOCK_KPIS, MOCK_TEAM_STATS } from '../data/mockData';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -41,16 +41,10 @@ export const Reports = () => {
   const [activeTab, setActiveTab] = useState<'general' | 'equipo'>('equipo');
 
   useEffect(() => {
-    Promise.all([
-      api.get('/dashboard/forecast'),
-      api.get('/dashboard/kpis'),
-      api.get('/dashboard/team')
-    ]).then(([f, k, t]) => {
-      setForecast(f.data);
-      setKpis(k.data);
-      setTeam(t.data);
-      setLoading(false);
-    });
+    setForecast(MOCK_FORECAST);
+    setKpis(MOCK_KPIS);
+    setTeam(MOCK_TEAM_STATS as unknown as RCStat[]);
+    setLoading(false);
   }, []);
 
   if (loading) return (

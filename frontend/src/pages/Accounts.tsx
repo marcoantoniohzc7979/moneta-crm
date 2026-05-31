@@ -5,8 +5,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
-import { accountStatusColor, accountStatusLabel, accountStatusDot, industryLabel, sizeLabel, getHealthScoreColor, formatCurrency } from '../utils/formatters';
-import api from '../utils/api';
+import { accountStatusColor, accountStatusLabel, accountStatusDot, industryLabel, sizeLabel, getHealthScoreColor } from '../utils/formatters';
+import { MOCK_ACCOUNTS } from '../data/mockData';
 
 const STATUS_GROUPS: { status: AccountStatus; label: string; icon: string }[] = [
   { status: 'CLIENTE_ACTIVO', label: 'Clientes Activos', icon: '🟢' },
@@ -22,8 +22,9 @@ const AccountForm = ({ onSave, onClose }: { onSave: () => void; onClose: () => v
 
   const save = async () => {
     setSaving(true);
-    try { await api.post('/accounts', form); onSave(); }
-    finally { setSaving(false); }
+    await new Promise(r => setTimeout(r, 500));
+    setSaving(false);
+    onSave();
   };
 
   return (
@@ -55,22 +56,18 @@ export const Accounts = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterIndustry, setFilterIndustry] = useState<string>('');
   const [showNew, setShowNew] = useState(false);
   const [activeTab, setActiveTab] = useState<AccountStatus | 'ALL'>('ALL');
   const navigate = useNavigate();
 
-  const load = () => {
-    setLoading(true);
-    const params: Record<string, string> = { limit: '100' };
-    if (search) params.search = search;
-    if (filterStatus) params.status = filterStatus;
-    if (filterIndustry) params.industry = filterIndustry;
-    api.get('/accounts', { params }).then(r => { setAccounts(r.data.accounts); setLoading(false); });
-  };
-
-  useEffect(() => { load(); }, [search, filterStatus, filterIndustry]);
+  useEffect(() => {
+    let filtered = MOCK_ACCOUNTS;
+    if (search) filtered = filtered.filter(a => a.razonSocial.toLowerCase().includes(search.toLowerCase()) || a.rfc?.toLowerCase().includes(search.toLowerCase()) || a.city?.toLowerCase().includes(search.toLowerCase()));
+    if (filterIndustry) filtered = filtered.filter(a => a.industry === filterIndustry);
+    setAccounts(filtered);
+    setLoading(false);
+  }, [search, filterIndustry]);
 
   const displayed = activeTab === 'ALL' ? accounts : accounts.filter(a => a.status === activeTab);
 
@@ -166,7 +163,7 @@ export const Accounts = () => {
       )}
 
       <Modal open={showNew} onClose={() => setShowNew(false)} title="Nueva Cuenta">
-        <AccountForm onSave={() => { setShowNew(false); load(); }} onClose={() => setShowNew(false)} />
+        <AccountForm onSave={() => setShowNew(false)} onClose={() => setShowNew(false)} />
       </Modal>
     </div>
   );
