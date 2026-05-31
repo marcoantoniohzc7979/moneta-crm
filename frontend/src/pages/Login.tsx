@@ -4,31 +4,31 @@ import { useAuthStore } from '../stores/authStore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
+const DEMO_USERS = [
+  { email: 'comercial@moneta.com.mx', password: 'moneta2024', name: 'Javier Gonzalez', role: 'DIRECTOR_COMERCIAL' as const }
+];
+
 export const Login = () => {
   const [email, setEmail] = useState('comercial@moneta.com.mx');
   const [password, setPassword] = useState('moneta2024');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuthStore();
+  const { localLogin } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-    try {
-      await login(email.trim().toLowerCase(), password.trim());
+
+    const user = DEMO_USERS.find(
+      u => u.email.toLowerCase().trim() === email.toLowerCase().trim()
+        && u.password === password.trim()
+    );
+
+    if (user) {
+      localLogin(user);
       navigate('/');
-    } catch (err: any) {
-      if (err?.response?.status === 401) {
-        setError('Credenciales incorrectas');
-      } else if (err?.code === 'ERR_NETWORK' || !err?.response) {
-        setError('No se puede conectar al servidor. Verifica tu conexión.');
-      } else {
-        setError('Error al iniciar sesión. Intenta de nuevo.');
-      }
-    } finally {
-      setLoading(false);
+    } else {
+      setError('Credenciales incorrectas');
     }
   };
 
@@ -74,7 +74,7 @@ export const Login = () => {
             </p>
           )}
 
-          <Button type="submit" loading={loading} className="w-full justify-center py-3">
+          <Button type="submit" className="w-full justify-center py-3">
             Acceder al CRM
           </Button>
 
